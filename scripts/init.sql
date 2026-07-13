@@ -1,0 +1,7 @@
+-- 手动创建 Note 表
+CREATE TABLE IF NOT EXISTS "Note" (
+    id SERIAL PRIMARY KEY,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);

@@ -1,65 +1,71 @@
-import Image from "next/image";
+import prisma from "@/lib/prisma"
+import { revalidatePath } from "next/cache"
 
-export default function Home() {
+// 新增笔记（Server Action）
+async function createNote(formData: FormData) {
+  "use server"
+
+  const title = formData.get("title") as string
+  const content = formData.get("content") as string
+
+  await prisma.note.create({
+    data: { title, content },
+  })
+
+  revalidatePath("/")
+}
+
+export default async function Home() {
+  const notes = await prisma.note.findMany({
+    orderBy: { createdAt: "desc" },
+  })
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
+    <main className="max-w-xl mx-auto p-8">
+      <h1 className="text-2xl font-bold mb-6">📝 记事本</h1>
+
+      {/* 新增表单 */}
+      <form action={createNote} className="mb-8 space-y-3">
+        <input
+          name="title"
+          placeholder="标题"
+          required
+          className="w-full border rounded-lg px-3 py-2"
         />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+        <textarea
+          name="content"
+          placeholder="内容"
+          rows={3}
+          required
+          className="w-full border rounded-lg px-3 py-2"
+        />
+        <button
+          type="submit"
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700"
+        >
+          添加
+        </button>
+      </form>
+
+      {/* 笔记列表 */}
+      <div className="space-y-4">
+        {notes.length === 0 && (
+          <p className="text-zinc-400">还没有笔记，添加一条吧</p>
+        )}
+        {notes.map((note) => (
+          <div key={note.id} className="border rounded-lg p-4">
+            <h2 className="font-semibold">{note.title}</h2>
+            <p className="text-zinc-600 text-sm mt-1">{note.content}</p>
+            <p className="text-zinc-400 text-xs mt-2">
+              {note.createdAt.toLocaleString("zh-CN")}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <footer className="mt-12 text-center text-zinc-400 text-sm">
+        数据库共 {notes.length} 条记录
+      </footer>
+    </main>
+  )
 }
