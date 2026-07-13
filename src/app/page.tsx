@@ -1,6 +1,9 @@
 import prisma from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 
+// 这个页面需要查数据库，不允许构建时预渲染
+export const dynamic = "force-dynamic"
+
 // 新增笔记（Server Action）
 async function createNote(formData: FormData) {
   "use server"
